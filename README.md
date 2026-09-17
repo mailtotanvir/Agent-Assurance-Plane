@@ -1,53 +1,129 @@
 # Agent Assurance Plane
 
+[![Python: 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3DA639.svg)](LICENSE)
+![Tests: 7 passing](https://img.shields.io/badge/tests-7%20passing-46A97A)
+![Policy: deterministic](https://img.shields.io/badge/policy-deterministic-395640)
+![Live evidence: optional](https://img.shields.io/badge/live%20assurance-optional-A99A63)
+
+**A runtime assurance layer for tool-using AI agents: it observes an execution agent independently, combines hard safeguards with Agentic Assurance, and makes the final control decision through a deterministic policy.**
+
 > Observability tells you what an AI agent did.<br>
 > **Agentic Assurance tells you whether it should have.**
 
-Agent Assurance Plane (AAP) is a small, local-first runtime assurance layer for tool-using AI agents. It keeps **execution**, **judgment**, and **control** separate:
+This is not an agent framework and it is not an observability dashboard. It is
+a small, runnable answer to a governance question:
 
-    Execution agent → event stream → Agentic Assurance → deterministic policy → continue / warn / interrupt
+> An agent has taken several actions. Is it still pursuing the user’s goal,
+> has it crossed a known boundary, and who has authority to stop it?
 
-The execution agent does work. Agentic Assurance independently observes its bounded state, applies hard safeguards and contextual assessment, and supplies structured evidence. The policy engine—not a model—owns the final control decision.
+The execution agent does not grade itself. Agent Assurance Plane observes its
+event stream from the outside, emits structured evidence, and applies policy.
+The demo uses a fictional checkout-latency investigation so the entire system
+runs locally.
 
-## Why this exists
+## The assurance spine
 
-Most agent systems can tell you which tools ran. That is useful, but it does not tell an operator whether the agent is still advancing the requested goal, repeating itself, or approaching an unsafe action.
+Three responsibilities stay separate by design:
 
-AAP explores the boundary:
+```mermaid
+flowchart LR
+    EA[Execution agent<br/>uses tools] --> ES[Event stream<br/>actions + results]
+    ES --> ST[Bounded agent state]
+    ST --> HS[Hard safeguards<br/>deterministic]
+    ST --> AA[Agentic Assurance<br/>contextual evidence]
+    HS --> JB[Judgment bus]
+    AA --> JB
+    JB --> PE[Deterministic policy]
+    PE -->|continue / warn / interrupt| EC[Execution control]
+
+    style EA fill:#FFFDF7,stroke:#A99A63,stroke-width:2px
+    style HS fill:#E3EADB,stroke:#395640,stroke-width:2px
+    style AA fill:#EEE9D7,stroke:#A99A63,stroke-width:2px
+    style PE fill:#FFF0ED,stroke:#A7473D,stroke-width:2px
+```
+
+The crucial boundary is between **Agentic Assurance** and **policy**:
+
+- Agentic Assurance produces evidence, including probabilities.
+- The policy engine is ordinary deterministic code with configured thresholds.
+- Only policy produces an interrupt.
+- Every judgment and policy result becomes part of the event timeline.
+
+This prevents a probabilistic model from quietly becoming the system’s
+unaccountable control plane.
+
+## What is being judged
+
+AAP intentionally keeps hard guarantees and contextual evidence separate.
+They answer different questions and should never be collapsed into one opaque
+score.
 
 | Hard safeguards | Agentic Assurance |
 | --- | --- |
-| Known rules with known outcomes | Context-sensitive, probabilistic evidence |
-| Repeated tool calls | Goal alignment |
-| Unapproved production mutations | Progress |
-| Budget and forbidden-transition checks | Tool appropriateness and unproductive loops |
-| Interrupt on violation | Inform a deterministic policy threshold |
+| Has the agent repeated the same tool too many times? | Is the agent still aligned with the original goal? |
+| Did it attempt a production mutation without approval? | Is it making meaningful progress? |
+| Did it exceed a simulated budget? | Is the current tool appropriate? |
+| Did it make a forbidden state transition? | Does the trajectory appear unproductively repetitive? |
+| Known rule → known result | Bounded context → constrained, probabilistic result |
 
-The UI shows both signals side by side. It intentionally does not hide disagreement behind a single score.
+The UI presents these columns side by side at every step. A passing hard
+safeguard means only that the agent did not violate that specific rule; it does
+not prove that the work remains useful.
 
-## Demo scenarios
+## Demo cases and expected evidence
 
-| Scenario | What it proves | Expected policy outcome |
-| --- | --- | --- |
-| `normal` | Focused investigation remains within safeguards | Continue |
-| `loop` | A hard repetition rule catches an unproductive loop | Interrupt |
-| `drift` | Context can identify behavior that rules alone may miss | Continue or warn in live assurance mode |
-| `unsafe-mutation` | Production-affecting tools require approval | Interrupt |
-| `forbidden-transition` | Impossible environment changes are blocked | Interrupt |
-| `mixed` | Productive work can later become a deterministic loop | Interrupt |
+| Scenario | What happens | Hard-safeguard result | Agentic Assurance contribution | Policy outcome |
+| --- | --- | --- | --- | --- |
+| `normal` | Metrics → traces → logs | Pass | Confirms relevant, productive work in live mode | Continue |
+| `loop` | The same log query repeats | Repetition violation | Can independently flag an unproductive loop | Interrupt |
+| `drift` | Valid tools move toward unrelated business questions | May remain green | Surfaces possible goal drift | Continue or warn, by threshold |
+| `unsafe-mutation` | Unapproved restart attempt | Mutation violation | Supplementary evidence only | Interrupt |
+| `forbidden-transition` | Impossible simulated environment change | Transition violation | Supplementary evidence only | Interrupt |
+| `mixed` | Useful investigation later becomes repetitive | Repetition violation | Can flag declining productivity before the hard stop | Interrupt |
+
+The offline evaluation suite runs all six trajectories. It records expected
+violations, expected intervention, actual policy result, and
+time-to-intervention without spending live API calls.
+
+## A real control decision
+
+The policy is intentionally easy to inspect:
+
+| Evidence | Deterministic action |
+| --- | --- |
+| Any hard-safeguard violation | Interrupt |
+| Agentic Assurance: high-confidence unproductive loop | Interrupt at configured threshold |
+| Agentic Assurance: high-confidence goal misalignment | Warn at configured threshold |
+| No trigger | Continue |
+
+The policy is not hidden in prompts or scattered across the application. Its
+inputs are typed `Judgment` records and its output is a typed
+`PolicyDecision`. The operator can answer “why did it stop?” with a specific
+rule or configured threshold, not a vague explanation.
 
 ## Quick start
 
-Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+### Prerequisites
+
+- Python **3.11+**
+- [uv](https://docs.astral.sh/uv/)
+- Optional: a TypeSafe API key for live Agentic Assurance
 
 ```bash
+git clone https://github.com/mailtotanvir/Agent-Assurance-Plane.git
+cd Agent-Assurance-Plane
 uv sync --extra dev
+
+# Start the human-readable demo
 uv run aap serve --port 8010
 ```
 
-Open [http://127.0.0.1:8010](http://127.0.0.1:8010). Choose a scenario and run it. The page first shows the process, then an outcome, then a step-by-step comparison of hard safeguards and Agentic Assurance.
+Open [http://127.0.0.1:8010](http://127.0.0.1:8010). The page begins with the
+runtime process, then shows the policy outcome, then explains each agent step
+with a neat hard-safeguards versus Agentic-Assurance comparison.
 
-Run scenarios from the terminal:
+Run scripted cases from the terminal:
 
 ```bash
 uv run aap demo normal
@@ -56,57 +132,51 @@ uv run aap demo mixed
 uv run aap evaluate
 ```
 
-## Live Agentic Assurance
+### Optional live Agentic Assurance
 
-The contextual layer uses TypeSafe Jev through a narrow adapter. It is optional: scripted demos, replay, and evaluation work offline.
+The contextual adapter uses TypeSafe Jev. It is isolated from the rest of the
+application, and all scripted demos, replay, and evaluation work without it.
 
 ```bash
-export TYPESAFE_API_KEY=...
+export TYPESAFE_API_KEY=your-key
+
+# Prove the adapter and typed response work
 uv run aap jev-smoke
+
+# Evaluate every scripted step with live contextual evidence
 uv run aap demo drift --live-jev
 ```
 
-The UI labels this signal **Agentic Assurance**. The TypeSafe-specific SDK is isolated to `src/aap/judges/jev.py`; the rest of the application operates on provider-neutral `Judgment` objects.
+Never commit a key. `.env` is ignored; `.env.example` contains only safe
+variable names.
 
-## Architecture
+## What a run retains
+
+Every run is a sequence of small, extensible events:
+
+| Event | Meaning |
+| --- | --- |
+| `TASK_STARTED` | Goal and execution begin |
+| `TOOL_CALL` / `TOOL_RESULT` | The execution agent acted and observed a result |
+| `JUDGMENT_EMITTED` | A hard safeguard or Agentic Assurance emitted evidence |
+| `POLICY_DECIDED` | The deterministic policy chose continue, warn, or interrupt |
+| `AGENT_INTERRUPTED` | Policy stopped execution |
+
+A provider-neutral judgment contains:
 
 ```text
-Execution agent
-      │
-      ▼
-  Agent events ──► Agent state
-                        │
-          ┌─────────────┴─────────────┐
-          ▼                           ▼
-  Hard safeguards              Agentic Assurance
-  deterministic rules          bounded contextual evaluation
-          │                           │
-          └─────────────┬─────────────┘
-                        ▼
-                  Judgment bus
-                        ▼
-             Deterministic policy engine
-                        ▼
-             CONTINUE / WARN / INTERRUPT
+judge · dimension · decision · probability · confidence
+evidence · severity · timestamp
 ```
 
-### Hard safeguards
-
-- Excessive consecutive use of the same tool
-- Unapproved `restart_service`, `change_config`, or `deploy`
-- Simulated token/cost budget breach
-- Forbidden simulated state transition
-
-### Agentic Assurance dimensions
-
-- Goal alignment
-- Progress
-- Tool appropriateness
-- Unproductive loop
+This is why Jev is an adapter rather than a dependency that leaks throughout
+the codebase. Future LLM, human, or verifier judges can produce the same
+internal record and feed the same policy.
 
 ## Replay and evaluation
 
-Every completed run can be persisted as JSON. Replays do not make API calls.
+Live calls are useful for an interactive demo, but reproducibility matters more
+for assurance work. Persist a run and replay it without contacting any model:
 
 ```bash
 uv run aap demo loop --output runs/example-loop.json
@@ -114,24 +184,50 @@ uv run aap replay runs/example-loop.json
 uv run aap evaluate
 ```
 
-The offline evaluation suite checks all six scripted trajectories for expected violations, interventions, and time-to-intervention.
+Replay uses recorded contextual judgments; it never silently spends API calls.
+The evaluation command is deliberately offline and reports whether each
+scripted case produced the expected deterministic violations and intervention.
 
-## Safety and privacy
+## Repository map
 
-- API credentials are read only from environment variables.
-- .env and generated run files are ignored by Git.
-- Secret-like keys are redacted before run persistence or API responses.
-- The sample environment and incident data are fictional.
-- This is a research/demo prototype, not a production authorization system.
+| Path | Responsibility |
+| --- | --- |
+| [`src/aap/models.py`](src/aap/models.py) | Provider-neutral events, judgments, state, and policy models |
+| [`src/aap/runtime.py`](src/aap/runtime.py) | Scripted execution agent and assurance orchestration |
+| [`src/aap/judges/deterministic.py`](src/aap/judges/deterministic.py) | Explicit hard safeguards |
+| [`src/aap/judges/jev.py`](src/aap/judges/jev.py) | Narrow TypeSafe adapter |
+| [`src/aap/policy.py`](src/aap/policy.py) | Deterministic control policy and thresholds |
+| [`src/aap/replay.py`](src/aap/replay.py) | JSON persistence and offline replay |
+| [`src/aap/evaluation.py`](src/aap/evaluation.py) | Six-scenario offline evaluation suite |
+| [`src/aap/api.py`](src/aap/api.py) | Local FastAPI surface |
+| [`web/`](web/) | Human-readable assurance timeline |
+| [`BLOG_POST.html`](BLOG_POST.html) | Styled long-form publication draft for review |
 
-## Development
+## Safety boundary
+
+This is a research/demo prototype, not a production authorization system.
+
+- The simulated agent works only against fictional checkout-latency data.
+- Secrets are read from environment variables and redacted before persistence
+  or API responses.
+- Local JSON persistence is sufficient for the prototype; there is no database,
+  authentication layer, Kafka cluster, or cloud infrastructure.
+- TypeSafe evidence is optional and bounded. The system does not send an
+  unbounded event history.
+- Production use would need workload-specific policy review, identity,
+  authorization, failure handling, audit storage, and operator controls.
+
+## Verification
 
 ```bash
 uv run pytest
 uv run ruff check .
+uv run aap evaluate
 ```
 
-Read the publication draft in [BLOG_POST_DRAFT.md](BLOG_POST_DRAFT.md).
+The current suite contains **7 passing tests**, including deterministic loops,
+unsafe mutations, API behavior, replay redaction, offline evaluation, and the
+policy branch used by contextual warnings.
 
 ## License
 
