@@ -35,7 +35,7 @@ function describeOutcome(data) {
   if (data.deterministic_violations) {
     explanation = `A non-negotiable safety rule was violated. The policy stopped the agent after ${data.events} recorded events.`;
   } else if (data.jev_warnings) {
-    explanation = 'No hard rule fired. Contextual assurance supplied evidence worth surfacing, and the policy applied its configured threshold.';
+    explanation = 'No hard rule fired. Agentic Assurance supplied evidence worth surfacing, and the policy applied its configured threshold.';
   } else {
     explanation = 'The agent remained within the configured deterministic safeguards. No intervention was necessary.';
   }
@@ -47,7 +47,7 @@ function describeOutcome(data) {
 function renderSummary(data) {
   const fields = [
     ['Hard-rule violations', data.deterministic_violations, 'A violation always interrupts the agent.'],
-    ['Contextual concerns', data.jev_warnings, 'Signals requiring human attention.'],
+    ['Agentic Assurance concerns', data.jev_warnings, 'Signals requiring human attention.'],
     ['Interventions', data.interventions, 'Times the agent was stopped.'],
     ['Events observed', data.events, 'Actions, results, judgments, and decisions.'],
   ];
@@ -63,7 +63,7 @@ function judgmentLine(judgment) {
   const row = document.createElement('li');
   const confidence = Math.round(judgment.probability * 100);
   row.className = `${judgment.judge} ${judgment.severity}`;
-  const source = judgment.judge === 'deterministic' ? 'Hard safeguard' : 'Contextual assurance';
+  const source = judgment.judge === 'deterministic' ? 'Hard safeguard' : 'Agentic Assurance';
   const detail = judgment.evidence?.[0] || '';
   row.innerHTML = `<strong>${source}: ${title(judgment.dimension)}</strong><span>${title(judgment.decision)}${judgment.judge === 'jev' ? ` · ${confidence}% confidence` : ''}</span><small>${detail}</small>`;
   return row;
@@ -95,13 +95,13 @@ function renderTimeline(run) {
       comparison.className = 'comparison';
       const safeguards = judgments.filter(judgment => judgment.judge === 'deterministic');
       const contextual = judgments.filter(judgment => judgment.judge !== 'deterministic');
-      comparison.innerHTML = '<div class="comparison-heading"><h4>Hard safeguards</h4><p>Known rules: always enforced.</p></div><div class="comparison-heading"><h4>Contextual assurance</h4><p>Is this still useful work?</p></div>';
+      comparison.innerHTML = '<div class="comparison-heading"><h4>Hard safeguards</h4><p>Known rules: always enforced.</p></div><div class="comparison-heading"><h4>Agentic Assurance</h4><p>Is this still useful work?</p></div>';
       const safeguardList = document.createElement('ul');
       const contextualList = document.createElement('ul');
       safeguards.filter(judgment => judgment.decision === 'violation').forEach(judgment => safeguardList.append(judgmentLine(judgment)));
       if (!safeguardList.children.length) safeguardList.innerHTML = '<li class="all-clear"><strong>All hard safeguards passed</strong><small>No known limit was broken at this step.</small></li>';
       if (contextual.length) contextual.forEach(judgment => contextualList.append(judgmentLine(judgment)));
-      else contextualList.innerHTML = '<li class="all-clear"><strong>Not evaluated in this run</strong><small>Enable live contextual assurance to add this signal.</small></li>';
+      else contextualList.innerHTML = '<li class="all-clear"><strong>Not evaluated in this run</strong><small>Enable live Agentic Assurance to add this signal.</small></li>';
       comparison.append(safeguardList, contextualList);
       card.append(comparison);
     }
@@ -131,12 +131,12 @@ function renderDisagreement(run) {
     disagreement.classList.add('hidden');
     return;
   }
-  disagreement.innerHTML = '<h2>How the assurance signals compare</h2><p>Hard safeguards answer whether a known guardrail was broken. Contextual assurance answers whether the behavior appears useful for the goal. A green safeguard does not erase a contextual concern.</p>';
+  disagreement.innerHTML = '<h2>How the assurance signals compare</h2><p>Hard safeguards answer whether a known guardrail was broken. Agentic Assurance answers whether the behavior appears useful for the goal. A green safeguard does not erase an Agentic Assurance concern.</p>';
   groupsWithBoth.forEach(([step, findings]) => {
     const row = document.createElement('p');
     const hard = findings.filter(j => j.judge === 'deterministic' && j.decision === 'violation').length;
     const jev = findings.filter(j => j.judge === 'jev' && j.severity === 'warning').length;
-    row.innerHTML = `<strong>Step ${step}:</strong> ${hard ? `${hard} hard-safeguard violation${hard > 1 ? 's' : ''}` : 'hard safeguards passed'}; ${jev ? `${jev} contextual concern${jev > 1 ? 's' : ''}` : 'no contextual concerns'}.`;
+    row.innerHTML = `<strong>Step ${step}:</strong> ${hard ? `${hard} hard-safeguard violation${hard > 1 ? 's' : ''}` : 'hard safeguards passed'}; ${jev ? `${jev} Agentic Assurance concern${jev > 1 ? 's' : ''}` : 'no Agentic Assurance concerns'}.`;
     disagreement.append(row);
   });
   disagreement.classList.remove('hidden');
@@ -144,7 +144,7 @@ function renderDisagreement(run) {
 
 async function execute() {
   runButton.disabled = true;
-  status.textContent = liveJev.checked ? 'Assessing contextual assurance…' : 'Running deterministic assurance…';
+  status.textContent = liveJev.checked ? 'Running Agentic Assurance…' : 'Running deterministic assurance…';
   try {
     const response = await fetch(`/api/demo/${encodeURIComponent(scenario.value)}?live_jev=${liveJev.checked}`, {method: 'POST'});
     const body = await response.text();
