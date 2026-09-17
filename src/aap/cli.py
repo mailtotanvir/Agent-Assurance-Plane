@@ -23,6 +23,9 @@ def main() -> None:
     demo_parser.add_argument("--output", type=Path, help="Write the complete run to JSON.")
     replay_parser = subparsers.add_parser("replay", help="Display a recorded run without API calls.")
     replay_parser.add_argument("run_file", type=Path)
+    serve_parser = subparsers.add_parser("serve", help="Start the local assurance timeline web app.")
+    serve_parser.add_argument("--host", default="127.0.0.1")
+    serve_parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
     if args.command == "jev-smoke":
@@ -44,6 +47,10 @@ def main() -> None:
         _print_run(run.model_dump())
     elif args.command == "replay":
         _print_run(load_run(args.run_file).model_dump())
+    elif args.command == "serve":
+        import uvicorn
+
+        uvicorn.run("aap.api:app", host=args.host, port=args.port, reload=False)
 
 
 def _print_run(data: dict[str, object]) -> None:

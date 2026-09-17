@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent Assurance Plane</title>
+    <link rel="stylesheet" href="/web/style.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">RUNTIME ASSURANCE DEMO</p>
+        <h1>Agent Assurance Plane</h1>
+        <p class="lede">Observe an agent’s actions, judge them with hard rules and contextual evidence, then make a deterministic control decision.</p>
+      </header>
+
+      <section class="controls" aria-label="Demo controls">
+        <label>Scenario <select id="scenario"></select></label>
+        <label class="toggle"><input id="live-jev" type="checkbox"> Live Jev evidence <small>uses API calls</small></label>
+        <button id="run">Run assurance demo</button>
+      </section>
+      <p id="goal" class="goal"></p>
+      <p id="status" role="status"></p>
+
+      <section id="summary" class="summary hidden" aria-live="polite"></section>
+      <section id="disagreement" class="card hidden"></section>
+      <section class="timeline-card">
+        <h2>Assurance timeline</h2>
+        <div id="timeline" class="timeline"><p>Run a scenario to see its event stream.</p></div>
+      </section>
+    </main>
+    <template id="event-template"><article class="event"><span class="kind"></span><div><strong></strong><pre></pre></div></article></template>
+    <script src="/web/app.js"></script>
+  </body>
+</html>
