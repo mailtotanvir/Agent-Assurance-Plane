@@ -7,6 +7,6 @@ __pycache__/
 htmlcov/
 .env
 *.local
+*:Zone.Identifier
 runs/*.json
 !runs/.gitkeep
-

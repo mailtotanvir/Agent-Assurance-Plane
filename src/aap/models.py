@@ -37,6 +37,7 @@ class Decision(StrEnum):
     MISALIGNED = "misaligned"
     PRODUCTIVE = "productive"
     UNPRODUCTIVE = "unproductive"
+    NOT_LOOPING = "not_looping"
     APPROPRIATE = "appropriate"
     INAPPROPRIATE = "inappropriate"
 
