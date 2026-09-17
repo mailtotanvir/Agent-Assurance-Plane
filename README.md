@@ -86,6 +86,18 @@ The offline evaluation suite runs all six trajectories. It records expected
 violations, expected intervention, actual policy result, and
 time-to-intervention without spending live API calls.
 
+### Evidence captures
+
+<p align="center">
+  <img src="agentic-assurance-warning.png" alt="Agentic Assurance warning while hard safeguards pass" width="48%">
+  <img src="hard-safeguard-interrupt.png" alt="Hard-safeguard interruption after repeated tool use" width="48%">
+</p>
+
+The first capture shows why contextual evidence matters: hard safeguards are
+still clear, but Agentic Assurance raises an unproductive-loop concern. The
+second shows the control boundary: a repeated-tool violation triggers a
+deterministic interrupt.
+
 ## A real control decision
 
 The policy is intentionally easy to inspect:

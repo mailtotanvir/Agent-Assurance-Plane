@@ -23,8 +23,12 @@ async function loadScenarios() {
   scenarios = data.scenarios;
   goal.textContent = `Agent goal: ${data.goal}`;
   scenarios.forEach(item => scenario.add(new Option(title(item.id), item.id)));
-  scenario.value = 'loop';
+  const parameters = new URLSearchParams(window.location.search);
+  const requestedScenario = parameters.get('scenario');
+  scenario.value = scenarios.some(item => item.id === requestedScenario) ? requestedScenario : 'loop';
+  liveJev.checked = parameters.get('assurance') === 'live';
   scenarioChanged();
+  if (parameters.get('run') === 'true') execute();
 }
 
 function describeOutcome(data) {

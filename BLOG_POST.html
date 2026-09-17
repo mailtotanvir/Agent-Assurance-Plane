@@ -17,8 +17,9 @@
     article { width:min(820px,100%); margin:auto; padding-bottom:100px; } section { margin:76px 0; } h2 { margin:0 0 20px; font:2rem/1.1 Georgia,serif; letter-spacing:-.035em; } h3 { margin-top:32px; } p,li { color:#bcc6d7; }.panel { padding:28px; }.callout { border-left:4px solid var(--amber); padding:4px 0 4px 24px; }.good { border-left-color:var(--forest); }
     .flow { overflow-x:auto; color:var(--forest); font:600 14px/1.85 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre; } table { width:100%; border-collapse:collapse; font-size:.93rem; } th,td { border-bottom:1px solid var(--line); padding:14px 10px; text-align:left; vertical-align:top; } th { color:var(--muted); font:700 11px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-transform:uppercase; }
     .compare { display:grid; grid-template-columns:1fr 1fr; gap:14px; }.compare > div { padding:22px; border:1px solid var(--line); border-radius:12px; background:var(--card); }.compare > div:first-child { border-top:5px solid var(--forest); }.compare > div:last-child { border-top:5px solid var(--khaki); }.compare h3 { margin:0 0 8px; }.compare p { margin:0; font-size:.92rem; }.compare ul { padding-left:18px; margin-bottom:0; }
+    figure { margin:28px 0; }.evidence-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }.evidence-grid img { width:100%; border:1px solid var(--line); border-radius:12px; background:var(--card); }.evidence-grid figcaption { color:var(--muted); font-size:.85rem; line-height:1.5; margin-top:9px; }
     .button { display:inline-block; margin:8px 8px 0 0; padding:11px 16px; border:1px solid var(--forest); border-radius:9px; background:var(--forest); color:#07110d; font-weight:800; text-decoration:none; }.button.secondary { background:transparent; color:var(--forest); } footer { border-top:1px solid var(--line); padding:32px 0 60px; color:var(--muted); font-size:.9rem; }
-    @media (max-width:720px) { .stats,.compare { grid-template-columns:1fr 1fr; } header { padding-top:55px; }.compare { grid-template-columns:1fr; } }
+    @media (max-width:720px) { .stats,.compare { grid-template-columns:1fr 1fr; } header { padding-top:55px; }.compare,.evidence-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -89,11 +90,40 @@ EXECUTION CONTROL</div>
       </section>
 
       <section>
+        <h2>Where TypeSafe Jev adds intelligence to the loop</h2>
+        <p>Hard safeguards are fast and reliable precisely because their questions are narrow. “Has this tool been called three times in a row?” can be answered from a counter. “Was an approval flag present?” can be answered from state. But agent failures are often failures of meaning: the tool call is valid, the result is well formed, and the work is still no longer useful.</p>
+        <p>TypeSafe Jev is the contextual reasoning layer in this prototype. Rather than asking it for an unconstrained essay, the adapter asks four small, typed questions about a bounded state: does this trajectory remain aligned with the goal, is it making progress, is the current tool appropriate, and does it appear unproductively repetitive?</p>
+        <div class="panel flow">AgentState
+  │  goal + recent events + current tool + result + environment
+  ▼
+JevJudge adapter
+  │  constrained choices, probabilities, confidence
+  ▼
+Provider-neutral Judgment
+  │  dimension + decision + evidence + severity
+  ▼
+Deterministic policy</div>
+        <p>This is the important design move: Jev does not directly stop the agent. It brings a calibrated, contextual signal into the software loop, where the rest of the system can treat it as evidence. The adapter normalizes the result into the same typed judgment model used by hard safeguards, while preserving which signal came from which source.</p>
+        <p>The state is deliberately bounded. The system sends the original goal, recent history, current tool and result, previous tools, and relevant simulated environment state—not an indefinitely growing transcript. That keeps the question legible, limits data exposure, and makes the resulting judgment easier to explain.</p>
+        <div class="panel callout"><strong>Jev provides the semantic “should this still make sense?” signal. Deterministic policy decides what authority that signal has.</strong></div>
+      </section>
+
+      <section>
         <h2>The demo is designed to preserve disagreement</h2>
         <p>The obvious case is an unapproved production action: a hard safeguard fires and policy interrupts. The more interesting case is goal drift. The agent begins correctly with metrics, traces, and logs, then turns toward customer demographics, marketing traffic, and unrelated configuration.</p>
         <p>Each action is technically valid. A basic rule engine may have no reason to fire. Agentic Assurance can surface that the actions no longer appear well aligned with the original goal: investigate why checkout latency increased.</p>
         <div class="panel callout good"><strong>A passing hard safeguard does not prove that an agent is doing useful work. It proves only that it has not broken that safeguard.</strong></div>
         <p>The interface therefore starts with a process view, then presents a policy outcome, then compares hard safeguards and Agentic Assurance at each step. The human can see whether the decision came from a known rule, a contextual concern, or neither.</p>
+        <div class="evidence-grid">
+          <figure>
+            <img src="agentic-assurance-warning.png" alt="Agentic Assurance raises a warning while hard safeguards remain clear">
+            <figcaption><strong>Context before control.</strong> At step four, hard safeguards remain clear while Agentic Assurance sees an 87% unproductive-loop signal. Policy warns and retains operator visibility rather than pretending the run is unquestionably safe.</figcaption>
+          </figure>
+          <figure>
+            <img src="hard-safeguard-interrupt.png" alt="Tool repetition safeguard interrupts the execution agent">
+            <figcaption><strong>Control when the boundary is known.</strong> At step five, the same trajectory reaches the configured repetition limit. The hard safeguard becomes a violation and deterministic policy interrupts execution.</figcaption>
+          </figure>
+        </div>
       </section>
 
       <section>
@@ -128,6 +158,25 @@ EXECUTION CONTROL</div>
           </table>
         </div>
         <p>The wedge is assurance at the point of action: enough context to judge a trajectory, a policy that can intervene, and an explanation a human can understand in seconds.</p>
+      </section>
+
+      <section>
+        <h2>What each stakeholder gets</h2>
+        <p>Agentic Assurance is not valuable because it adds another score to a dashboard. It is valuable because different people can finally answer their operational question without asking the execution agent to explain itself after the fact.</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Stakeholder</th><th>Question they need answered</th><th>What this system gives them</th></tr></thead>
+            <tbody>
+              <tr><td>Developer building an agent</td><td>How do I add guardrails without hard-coding safety logic into every tool?</td><td>A stable judge and policy boundary. New tools emit events; reusable safeguards and Agentic Assurance assess the state outside the agent.</td></tr>
+              <tr><td>Platform or SRE operator</td><td>Why was an automated run stopped, and what should I inspect next?</td><td>A timeline that preserves the tool action, result, hard-safeguard outcome, contextual evidence, policy reason, and interruption point.</td></tr>
+              <tr><td>Engineering leader</td><td>Can we let agents act without creating an ungovernable black box?</td><td>Human-owned thresholds, deterministic control, replayable runs, and an explicit separation between model evidence and operational authority.</td></tr>
+              <tr><td>Business owner</td><td>Where is the value beyond another AI feature?</td><td>Lower interruption cost: less time spent babysitting loops, faster escalation when work drifts, and clearer accountability when agents touch expensive workflows.</td></tr>
+              <tr><td>Risk or compliance partner</td><td>Can policy be inspected and changed without retraining a model?</td><td>Named safeguards and thresholds expressed as normal application configuration, with no need to treat the model as the policy engine.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>For an enterprise, the long-term opportunity is a shared assurance contract across many agents. Every agent may use different tools or models, but each can emit the same small event schema, receive the same judgment types, and be governed by policy appropriate to its environment. That creates a path from one focused incident-response demo to a portfolio-level control surface without forcing every team into the same agent framework.</p>
+        <p>The business case is measurable: time-to-intervention for loops, escalation rate for contextual drift, policy-trigger rate by agent, operator review minutes, avoided unsafe actions, and the fraction of runs that remain replayable. Those are operational metrics, not promises that an AI model will be perfect.</p>
       </section>
 
       <section>
