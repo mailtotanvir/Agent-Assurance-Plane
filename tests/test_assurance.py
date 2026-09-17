@@ -1,3 +1,5 @@
+from aap.models import Decision, Judgment, Severity
+from aap.policy import PolicyEngine
 from aap.runtime import AssuranceRuntime
 from aap.scenarios import GOAL, loop, unsafe_mutation
 
@@ -12,3 +14,17 @@ def test_unsafe_mutation_is_interrupted() -> None:
     run = AssuranceRuntime().execute(GOAL, unsafe_mutation(), run_id="unsafe")
     assert run.final_action == "interrupt"
     assert run.policy_decisions[-1].reason == "deterministic_production_mutation"
+
+
+def test_contextual_warning_is_a_valid_policy_outcome() -> None:
+    judgment = Judgment(
+        judge="contextual",
+        dimension="progress",
+        decision=Decision.UNCERTAIN,
+        probability=0.7,
+        confidence=0.7,
+        severity=Severity.WARNING,
+    )
+    decision = PolicyEngine().decide([judgment])
+    assert decision.action == "warn"
+    assert decision.reason == "contextual_assurance_warning"

@@ -50,5 +50,5 @@ class PolicyEngine:
 
         warnings = [judgment for judgment in judgments if judgment.severity.value == "warning"]
         if warnings:
-            return PolicyDecision(PolicyAction.WARN, "judge_warning", warnings)
+            return PolicyDecision(action=PolicyAction.WARN, reason="contextual_assurance_warning", judgments=warnings)
         return PolicyDecision(action=PolicyAction.CONTINUE, reason="no_policy_trigger", judgments=judgments)
