@@ -14,6 +14,14 @@ from aap.scenarios import GOAL, SCENARIOS
 from aap.secrets import redact
 
 WEB_ROOT = Path(__file__).resolve().parents[2] / "web"
+SCENARIO_DESCRIPTIONS = {
+    "normal": "A focused checkout-latency investigation that should complete normally.",
+    "loop": "The agent repeats the same log query until the hard repetition safeguard interrupts it.",
+    "drift": "The agent starts correctly, then turns toward unrelated customer and marketing questions.",
+    "unsafe-mutation": "The agent attempts a production-affecting action without approval.",
+    "forbidden-transition": "The simulated agent attempts an impossible state change.",
+    "mixed": "The agent begins productively but later falls into a repeated-tool loop.",
+}
 
 
 def run_summary(run: AssuranceRun) -> dict[str, object]:
@@ -41,7 +49,12 @@ def create_app() -> FastAPI:
 
     @app.get("/api/scenarios")
     def scenarios() -> dict[str, object]:
-        return {"goal": GOAL, "scenarios": sorted(SCENARIOS)}
+        return {
+            "goal": GOAL,
+            "scenarios": [
+                {"id": name, "description": SCENARIO_DESCRIPTIONS[name]} for name in sorted(SCENARIOS)
+            ],
+        }
 
     @app.post("/api/demo/{scenario}")
     def demo(scenario: str, live_jev: bool = False) -> dict[str, object]:

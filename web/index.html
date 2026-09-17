@@ -11,7 +11,7 @@
       <header>
         <p class="eyebrow">RUNTIME ASSURANCE DEMO</p>
         <h1>Agent Assurance Plane</h1>
-        <p class="lede">Observe an agent’s actions, judge them with hard rules and contextual evidence, then make a deterministic control decision.</p>
+        <p class="lede">See whether an AI agent is still working safely toward its goal—and exactly why the assurance system lets it continue, warns, or stops it.</p>
       </header>
 
       <section class="controls" aria-label="Demo controls">
@@ -20,16 +20,25 @@
         <button id="run">Run assurance demo</button>
       </section>
       <p id="goal" class="goal"></p>
+      <p id="scenario-description" class="scenario-description"></p>
       <p id="status" role="status"></p>
 
+      <section class="how-to-read">
+        <h2>How to read a run</h2>
+        <div><strong>1. Agent action</strong><span>What the agent actually did.</span></div>
+        <div><strong>2. Safety checks</strong><span>Hard rules that are always enforced.</span></div>
+        <div><strong>3. Contextual evidence</strong><span>Jev’s confidence about relevance and progress.</span></div>
+        <div><strong>4. Control decision</strong><span>The deterministic policy outcome.</span></div>
+      </section>
+      <section id="outcome" class="outcome hidden" aria-live="polite"></section>
       <section id="summary" class="summary hidden" aria-live="polite"></section>
       <section id="disagreement" class="card hidden"></section>
       <section class="timeline-card">
-        <h2>Assurance timeline</h2>
-        <div id="timeline" class="timeline"><p>Run a scenario to see its event stream.</p></div>
+        <h2>What happened, step by step</h2>
+        <p class="section-help">The system preserves both hard-rule findings and Jev’s contextual signal. They are never merged into one opaque score.</p>
+        <div id="timeline" class="timeline"><p>Choose a scenario, then run it to see the explanation.</p></div>
       </section>
     </main>
-    <template id="event-template"><article class="event"><span class="kind"></span><div><strong></strong><pre></pre></div></article></template>
     <script src="/web/app.js"></script>
   </body>
 </html>
