@@ -18,6 +18,7 @@ uv sync --extra dev
 uv run aap demo normal
 uv run aap demo loop
 uv run aap demo drift
+uv run aap evaluate
 uv run aap serve
 ```
 
@@ -35,6 +36,18 @@ agent events -> state -> deterministic judges + JevJudge -> judgment bus -> poli
 
 The internal `Judgment` model is provider-neutral. `JevJudge` is the only component aware of the TypeSafe SDK.
 
+The web UI is available at `http://127.0.0.1:8000` after `uv run aap serve`. Turn on **Live Jev evidence** only when you want the demo to make live TypeSafe API calls.
+
+## Replays and evaluation
+
+```bash
+uv run aap demo loop --output runs/example-loop.json
+uv run aap replay runs/example-loop.json
+uv run aap evaluate
+```
+
+Replays never call Jev. The evaluation command is intentionally offline and reports expected versus actual deterministic violations, intervention outcomes, and time-to-intervention.
+
 ## Safety and privacy
 
 AAP deliberately stores no API keys. It redacts secret-like fields from persisted events and never writes live API credentials to run files or logs. The simulation uses fictional checkout-latency data only.
@@ -47,4 +60,3 @@ uv run ruff check .
 ```
 
 This is a research/demo prototype, not a production authorization system.
-

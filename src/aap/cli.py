@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from aap.evaluation import evaluate_scripted_trajectories
 from aap.judges.jev import JevJudge
 from aap.models import AgentState
 from aap.replay import load_run, save_run
@@ -26,6 +27,7 @@ def main() -> None:
     serve_parser = subparsers.add_parser("serve", help="Start the local assurance timeline web app.")
     serve_parser.add_argument("--host", default="127.0.0.1")
     serve_parser.add_argument("--port", type=int, default=8000)
+    subparsers.add_parser("evaluate", help="Run reproducible offline scenario evaluation.")
     args = parser.parse_args()
 
     if args.command == "jev-smoke":
@@ -51,6 +53,8 @@ def main() -> None:
         import uvicorn
 
         uvicorn.run("aap.api:app", host=args.host, port=args.port, reload=False)
+    elif args.command == "evaluate":
+        _print_run(evaluate_scripted_trajectories())
 
 
 def _print_run(data: dict[str, object]) -> None:

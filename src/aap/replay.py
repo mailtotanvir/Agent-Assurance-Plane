@@ -7,11 +7,12 @@ from pathlib import Path
 
 from aap.models import AgentEvent, Judgment, PolicyDecision
 from aap.runtime import AssuranceRun
+from aap.secrets import redact
 
 
 def save_run(run: AssuranceRun, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(run.model_dump(), indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(redact(run.model_dump()), indent=2) + "\n", encoding="utf-8")
 
 
 def load_run(path: Path) -> AssuranceRun:

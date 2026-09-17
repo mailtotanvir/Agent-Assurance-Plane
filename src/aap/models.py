@@ -9,6 +9,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_serializer
 
+from aap.secrets import redact
+
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
@@ -108,5 +110,5 @@ class AgentState(BaseModel):
             "recent_events": [
                 {"type": event.event_type, "payload": event.payload} for event in self.recent_events[-limit:]
             ],
-            "environment": self.environment,
+            "environment": redact(self.environment),
         }

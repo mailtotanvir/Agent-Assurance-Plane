@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from aap.judges.jev import JevJudge
 from aap.runtime import AssuranceRun, AssuranceRuntime
 from aap.scenarios import GOAL, SCENARIOS
+from aap.secrets import redact
 
 WEB_ROOT = Path(__file__).resolve().parents[2] / "web"
 
@@ -50,7 +51,7 @@ def create_app() -> FastAPI:
         runtime = AssuranceRuntime(contextual_judge=JevJudge() if live_jev else None)
         run = runtime.execute(GOAL, factory())
         runs[run.run_id] = run
-        return {"run": run.model_dump(), "summary": run_summary(run)}
+        return {"run": redact(run.model_dump()), "summary": run_summary(run)}
 
     @app.get("/api/runs")
     def list_runs() -> list[dict[str, object]]:
@@ -61,7 +62,7 @@ def create_app() -> FastAPI:
         run = runs.get(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
-        return {"run": run.model_dump(), "summary": run_summary(run)}
+        return {"run": redact(run.model_dump()), "summary": run_summary(run)}
 
     @app.get("/")
     def index() -> FileResponse:

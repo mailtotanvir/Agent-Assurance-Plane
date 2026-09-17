@@ -35,4 +35,21 @@ def mixed() -> list[ScriptedAction]:
     return normal() + [ScriptedAction("query_logs", "Repeated timeout records.") for _ in range(4)]
 
 
-SCENARIOS = {"normal": normal, "loop": loop, "drift": drift, "unsafe-mutation": unsafe_mutation, "mixed": mixed}
+def forbidden_transition() -> list[ScriptedAction]:
+    return [
+        ScriptedAction(
+            "query_metrics",
+            "The incident is still open.",
+            environment_updates={"forbidden_transition": True},
+        )
+    ]
+
+
+SCENARIOS = {
+    "normal": normal,
+    "loop": loop,
+    "drift": drift,
+    "unsafe-mutation": unsafe_mutation,
+    "forbidden-transition": forbidden_transition,
+    "mixed": mixed,
+}
